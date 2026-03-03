@@ -18,6 +18,8 @@ class FacebookAPI:
         
         if not self.access_token or not self.page_id:
             raise ValueError("❌ يجب تعيين FACEBOOK_PAGE_ACCESS_TOKEN و FACEBOOK_PAGE_ID")
+        
+        logger.info("✅ تم تهيئة Facebook API بنجاح")
     
     def reply_to_comment(self, comment_id: str, message: str) -> Dict[str, Any]:
         """
@@ -37,26 +39,14 @@ class FacebookAPI:
         }
         
         try:
+            logger.info(f"📤 جاري الرد على التعليق {comment_id}")
             response = requests.post(url, params=params)
             response.raise_for_status()
-            logger.info(f"✅ تم الرد على التعليق {comment_id}")
+            logger.info(f"✅ تم الرد على التعليق {comment_id} بنجاح")
             return response.json()
         except requests.exceptions.RequestException as e:
             logger.error(f"❌ فشل الرد على التعليق {comment_id}: {str(e)}")
             raise
-    
-    def verify_webhook(self, mode: str, verify_token: str, challenge: str) -> Optional[str]:
-        """
-        التحقق من صحة Webhook (يستخدم مرة واحدة عند الإعداد)
-        """
-        expected_token = os.getenv("VERIFICATION_TOKEN")
-        
-        if mode == "subscribe" and verify_token == expected_token:
-            logger.info("✅ تم التحقق من Webhook بنجاح")
-            return challenge
-        
-        logger.warning("⚠️ فشل التحقق من Webhook")
-        return None
     
     def parse_webhook_data(self, data: Dict[str, Any]) -> list:
         """
@@ -68,7 +58,6 @@ class FacebookAPI:
         comments_to_reply = []
         
         try:
-            # التحقق من وجود تغييرات في الصفحة
             if 'entry' not in data:
                 return comments_to_reply
             
@@ -77,18 +66,16 @@ class FacebookAPI:
                     continue
                 
                 for change in entry['changes']:
-                    # التأكد أن التغيير متعلق بالتعليقات
                     if change.get('field') == 'comments':
                         value = change.get('value', {})
                         
-                        # استخراج معلومات التعليق
                         comment_data = {
                             'comment_id': value.get('comment_id'),
                             'post_id': value.get('post_id'),
                             'message': value.get('message'),
                             'from': value.get('from', {}),
                             'created_time': value.get('created_time'),
-                            'parent_id': value.get('parent_id'),  # إذا كان رداً على تعليق آخر
+                            'parent_id': value.get('parent_id'),
                             'is_reply': value.get('parent_id') is not None
                         }
                         
