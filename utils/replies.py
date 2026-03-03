@@ -1,7 +1,7 @@
 import os
 import random
 import logging
-from typing import List, Dict, Any
+from typing import Dict, Any, List
 
 logger = logging.getLogger(__name__)
 
@@ -9,19 +9,23 @@ class ReplyManager:
     """إدارة الردود التلقائية"""
     
     def __init__(self):
-        # الردود الافتراضية (يمكن تعديلها أو إضافتها)
+        # الردود المتنوعة (سيختار البوت رداً عشوائياً)
         self.default_replies = [
-            "شكراً لتعليقك! نحن نقدر وقتك.",
-            "نقدر تفاعلك معنا! شكراً لك.",
-            "تعليقك يعني لنا الكثير، شكراً!",
-            "نحن سعداء بتواصلك معنا، شكراً جزيلاً.",
-            "شكراً لمشاركتنا رأيك! نتمنى لك يوماً سعيداً."
+            "شكراً لتعليقك! نحن نقدر وقتك. 😊",
+            "تسلم على تفاعلك الجميل! نورت الصفحة 🌟",
+            "نقدر تواصلك معنا، شكراً جزيلاً! ❤️",
+            "تعليقك يعني لنا الكثير، شكراً لمشاركتنا! 🙏",
+            "نحن سعداء بتفاعلك، شكراً لك! ✨",
+            "شكراً لمشاركتنا رأيك! نتمنى لك يوماً سعيداً 🌹",
+            "فخورين بمتابعين زيك! تعليقك أسعدنا 🥰"
         ]
         
-        # يمكن أيضاً قراءة الرد من متغير البيئة
+        # إضافة الرد من متغير البيئة إذا وجد
         env_reply = os.getenv("REPLY_MESSAGE")
         if env_reply:
             self.default_replies.insert(0, env_reply)
+        
+        logger.info(f"✅ تم تهيئة مدير الردود بـ {len(self.default_replies)} رد")
     
     def generate_reply(self, comment_data: Dict[str, Any]) -> str:
         """
@@ -36,14 +40,22 @@ class ReplyManager:
         comment_text = comment_data.get('message', '').lower()
         commenter_name = comment_data.get('from', {}).get('name', '')
         
-        # يمكنك إضافة منطق أكثر ذكاءً هنا
-        # مثلاً: ردود مختلفة حسب محتوى التعليق
+        # يمكنك إضافة منطق ذكي هنا بناءً على محتوى التعليق
+        if '?' in comment_text or '؟' in comment_text:
+            # إذا كان السؤال يحتوي على علامة استفهام
+            custom_reply = "شكراً على سؤالك! فريقنا سيتواصل معك قريباً للإجابة عليه 📞"
+            return custom_reply
+        
+        if any(word in comment_text for word in ['شكر', 'تسلم', 'مشكور', 'thanks']):
+            # إذا كان التعليق شكراً
+            custom_reply = "العفو! هذا واجبنا من أجلك 😊"
+            return custom_reply
         
         # اختيار رد عشوائي من القائمة
         reply = random.choice(self.default_replies)
         
-        # إضافة اسم المعلق إذا أردت
-        if commenter_name and random.choice([True, False]):  # 50% احتمال
+        # إضافة اسم المعلق أحياناً (30% احتمال)
+        if commenter_name and random.random() < 0.3:
             reply = f"{commenter_name}، {reply}"
         
         logger.info(f"💬 تم توليد رد: {reply}")
@@ -59,14 +71,10 @@ class ReplyManager:
         Returns:
             True إذا كان يجب الرد
         """
-        # عدم الرد إذا كان التعليق نفسه رداً (لتجنب الرد على الردود)
+        # لا نرد على الردود (لتجنب التكرار)
         if comment_data.get('is_reply', False):
-            logger.debug("⏭️ تخطي الرد لأنه رد على تعليق آخر")
+            logger.debug("⏭️ تخطي الرد على رد")
             return False
         
-        # يمكنك إضافة شروط أخرى:
-        # - عدم الرد على كلمات معينة
-        # - الرد فقط إذا كان للتعليق عدد معين من الكلمات
-        # - إلخ
-        
+        # يمكن إضافة شروط أخرى هنا
         return True
