@@ -9,6 +9,7 @@ __pycache__/
 venv/
 env/
 .python-version
+*.pyc
 
 # IDE
 .vscode/
@@ -18,3 +19,6 @@ env/
 
 # Logs
 *.log
+
+# Vercel
+.vercel
